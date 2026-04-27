@@ -10,7 +10,56 @@ This guide walks you through setting up a Jenkins pipeline for the Spot Monitori
 - Docker installed and running
 - GitHub repository created with your project
 
-## Step 1: Create a New Jenkins Job
+## Step 1: Prepare Jenkins Container
+
+Your Jenkins is running in a Docker container without Python 3 and Docker CLI. Install dependencies:
+
+### Option A: Using Setup Script (Recommended)
+
+1. The repository includes `jenkins-setup.sh`:
+   ```bash
+   docker exec jenkins bash /var/jenkins_home/jenkins-setup.sh
+   ```
+
+2. Wait for installation to complete
+
+3. Verify:
+   ```bash
+   docker exec jenkins python3 --version
+   docker exec jenkins docker --version
+   ```
+
+### Option B: Manual Installation
+
+Access Jenkins container:
+```bash
+docker exec -it jenkins bash
+```
+
+Run these commands inside the container:
+```bash
+apt-get update
+apt-get install -y python3 python3-venv python3-pip git
+
+# Install Docker CLI
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+# Add jenkins user to docker group
+usermod -aG docker jenkins
+```
+
+Exit the container:
+```bash
+exit
+```
+
+Restart Jenkins:
+```bash
+docker restart jenkins
+```
+
+## Step 2: Create a New Jenkins Job
 
 1. Open Jenkins: `http://localhost:8080`
 2. Click **New Item**
@@ -18,27 +67,27 @@ This guide walks you through setting up a Jenkins pipeline for the Spot Monitori
 4. Select **Pipeline**
 5. Click **OK**
 
-## Step 2: Configure the Pipeline
+## Step 3: Configure the Pipeline
 
 In the job configuration page:
 
-### 2.1 General Settings
+### 3.1 General Settings
 - Check **GitHub project**
-- Project URL: `https://github.com/your-username/spot_monitoring/`
+- Project URL: `https://github.com/Sunny1084/spot_monitoring/`
 
-### 2.2 Build Triggers
+### 3.2 Build Triggers
 - Check **GitHub hook trigger for GITScm polling**
 - This will trigger builds on every push to GitHub
 
-### 2.3 Advanced Project Options
+### 3.3 Advanced Project Options
 - Leave defaults or customize as needed
 
-### 2.4 Pipeline Definition
+### 3.4 Pipeline Definition
 
 Select **Pipeline script from SCM**:
 
 - **SCM**: Git
-- **Repository URL**: `https://github.com/your-username/spot_monitoring.git`
+- **Repository URL**: `https://github.com/Sunny1084/spot_monitoring.git`
 - **Credentials**: Add GitHub credentials if private repo
 - **Branch Specifier**: `*/main`
 - **Script Path**: `Jenkinsfile`
