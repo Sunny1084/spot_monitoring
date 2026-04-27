@@ -114,45 +114,83 @@ After a successful build:
 
 ## Troubleshooting
 
-### Issue: "bat command not found"
-- This script uses Windows batch (`bat`) commands
-- Ensure Jenkins agent is running on Windows
-- If using Linux agents, change `bat` to `sh` commands
+### Issue: "Batch scripts can only be run on Windows nodes"
+- Your Jenkins is running on Linux, not Windows
+- The Jenkinsfile has been updated to use `sh` commands for Linux
+- Ensure you commit and push the updated Jenkinsfile:
+  ```powershell
+  git add Jenkinsfile
+  git commit -m "Update Jenkinsfile for Linux Jenkins agent"
+  git push origin main
+  ```
 
-### Issue: "Python not found"
-- Add Python to Jenkins system PATH
-- Or specify full path in pipeline: `C:\\Python311\\python.exe`
+### Issue: "Python not found" (Linux)
+- Ensure Python 3 is installed on the Jenkins server
+- SSH into Jenkins container and install:
+  ```bash
+  apt-get update && apt-get install -y python3 python3-venv
+  ```
+- Or specify full path in pipeline: `/usr/bin/python3`
 
 ### Issue: "Docker daemon is not running"
-- Start Docker Desktop before running pipeline
-- Or configure Jenkins to run Docker commands via remote Docker daemon
+- Ensure Docker is running on Jenkins server or agent
+- Check Jenkins agent configuration in Jenkins UI
+- Verify Docker socket permissions in Jenkins container:
+  ```bash
+  sudo usermod -aG docker jenkins
+  sudo systemctl restart jenkins
+  ```
 
-### Issue: "venv command not found"
-- Ensure you're using the correct Python installation
-- Run: `python -m venv --version` to verify venv module availability
+### Issue: "venv command not found" (Linux)
+- Install Python3 venv:
+  ```bash
+  apt-get install -y python3.11-venv
+  ```
+- Or use: `python3 -m venv venv`
 
-## Example Windows Batch Fixes
+### Issue: Test container fails to start
+- Check if port 8000 is already in use:
+  ```bash
+  docker ps -a
+  docker stop test-container || true
+  docker rm test-container || true
+  ```
 
-If `bat` commands fail, replace with:
+## Jenkins Running on Linux
+
+The Jenkinsfile is now configured for Linux Jenkins agents running as Docker containers.
+
+### Key Differences from Windows:
+- Uses `sh` instead of `bat` for shell commands
+- Venv activation: `. venv/bin/activate` instead of `call venv\Scripts\activate.bat`
+- Path separators: `/` instead of `\`
+- Docker socket: `/var/run/docker.sock` instead of `npipe`
+
+### Accessing Jenkins Container
+
+If Jenkins is running in Docker:
+
+```bash
+docker exec -it jenkins bash
+```
+
+### Installing Dependencies in Jenkins Container
+
+```bash
+docker exec jenkins apt-get update
+docker exec jenkins apt-get install -y python3 python3-venv docker.io git
+```
+
+## Linux-Specific Pipeline Example
+
+The updated Jenkinsfile uses shell commands compatible with Linux:
 
 ```groovy
-// For tests without venv
-stage('Run Tests') {
-    steps {
-        bat 'pytest tests/ -v'
-    }
-}
-
-// With full Python path
-stage('Install Dependencies') {
-    steps {
-        bat '''
-            C:\\Python311\\python.exe -m venv venv
-            call venv\\Scripts\\activate.bat
-            pip install -r requirements.txt
-        '''
-    }
-}
+sh '''
+    python3 -m venv venv
+    . venv/bin/activate
+    pip install -r requirements.txt
+'''
 ```
 
 ## Pipeline Stages Explained
