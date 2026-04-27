@@ -1,0 +1,24 @@
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  artifacts_dir: artifacts
+  models_dir: artifacts/models
+  mlruns_dir: mlruns
+  experiment_name: spot-instance-interruption
+  raw_files:
+    launch: launch_log.csv
+    termination: termination_log.csv
+    prices: spot_price.csv
+training:
+  random_state: 42
+  contamination_grid: [0.01, 0.03, 0.05, 0.1]
+  n_estimators: 200
+  max_samples: auto
+  n_jobs: -1
+  test_size: 0.0
+evaluation:
+  early_warning_window_hours: 6
+api:
+  host: 0.0.0.0
+  port: 8000
+  model_path: artifacts/models/model.joblib
